@@ -340,3 +340,217 @@ jenkins
 URL*
 http://192.168.70.135:8080/sonar-webhook/
 
+
+Configure RBACK
+
+namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webapps
+
+sericeAccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+ name: jenkins
+ namespace: webapps
+
+kubectl create -f namespace.yaml
+kubectl  get ns | grep webapps
+kubectl create -f serviceAccount.yaml
+ kubectl  get serviceaccounts -n webapps
+
+
+REF: https://github.com/jaiswaladi246/EKS-Complete/blob/main/Steps-eks.md
+
+Create Role
+role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app-role
+  namespace: webapps
+rules:
+  - apiGroups:
+        - ""
+        - apps
+        - autoscaling
+        - batch
+        - extensions
+        - policy
+        - rbac.authorization.k8s.io
+    resources:
+      - pods
+      - secrets
+      - componentstatuses
+      - configmaps
+      - daemonsets
+      - deployments
+      - events
+      - endpoints
+      - horizontalpodautoscalers
+      - ingress
+      - jobs
+      - limitranges
+      - namespaces
+      - nodes
+      - pods
+      - persistentvolumes
+      - persistentvolumeclaims
+      - resourcequotas
+      - replicasets
+      - replicationcontrollers
+      - serviceaccounts
+      - services
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+kubectl create -f role.yaml
+ kubectl  get role -n webapps
+ kubctl describe role app-role -n webapps
+
+
+Bind the role to service account
+
+role-bind.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: app-rolebinding
+  namespace: webapps 
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: app-role 
+subjects:
+- namespace: webapps 
+  kind: ServiceAccount
+  name: jenkins 
+
+kubectl create -f role-bind.yaml
+ kubectl get rolebindings -n webapps
+
+Generate token using service account in the namespace
+Create Token 
+REF:
+https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#:~:text=To%20create%20a%20non%2Dexpiring,with%20that%20generated%20token%20data.
+
+
+vim secret.yaml
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: mysecretname
+  namespace: webapps 
+  annotations:
+    kubernetes.io/service-account.name: jenkins
+
+kubectl create -f secret.yaml -n webapps
+ kubectl get secrets -n webapps
+kubectl describe secret mysecretname -n webapps
+
+
+
+deployment-service.yaml
+
+apiVersion: apps/v1
+kind: Deployment # Kubernetes resource kind we are creating
+metadata:
+  name: boardgame-deployment
+spec:
+  selector:
+    matchLabels:
+      app: boardgame
+  replicas: 2 # Number of replicas that will be created for this deployment
+  template:
+    metadata:
+      labels:
+        app: boardgame
+    spec:
+      containers:
+        - name: boardgame
+          image: gchauhan1517/boardgame:latest # Image that will be used to containers in the cluster
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080 # The port that the container is running on in the cluster
+
+
+---
+
+apiVersion: v1 # Kubernetes API version
+kind: Service # Kubernetes resource kind we are creating
+metadata: # Metadata of the resource kind we are creating
+  name: boardgame-ssvc
+spec:
+  selector:
+    app: boardgame
+  ports:
+    - protocol: "TCP"
+      port: 8080 # The port that the service is running on in the cluster
+      targetPort: 8080 # The port exposed by the service
+  type: LoadBalancer # type of the service.
+
+
+Configure email
+Create app password
+
+Jnekins > Mange Jenkins > system
+Extended E-mail Notification
+SMTP server
+smtp.gmail.com
+SMTP Port
+465
+Advanced
+Edited
+Credentials
+
+gaurav.mau854@gmail.com/****** (mail-cred)
+Add
+
+Use SSL
+
+Use TLS
+
+Use OAuth 2.0
+
+
+
+E-mail Notification
+SMTP server
+smtp.gmail.com
+Default user e-mail suffix
+?
+Advanced
+Edited
+
+Use SMTP Authentication
+?
+User Name
+gaurav.mau854@gmail.com
+Password
+•••••••••••••••••••
+
+Use SSL
+?
+
+Use TLS
+SMTP Port
+?
+465
+Reply-To Address
+Charset
+UTF-8
+
+Test configuration by sending test e-mail
+Test e-mail recipient
+gaurav.mau854@gmail.com
+Test configuration
+Email was successfully sent
+
+
+Add port 465 for email notificatio on jenkins server. 
+firewall-cmd --add-port=465/tcp --permanent
+firewall-cmd --reload
+firewall-cmd --list-ports
+
