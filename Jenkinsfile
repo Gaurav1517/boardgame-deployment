@@ -83,11 +83,9 @@ pipeline {
         stage('Docker Build & Tag') {
             steps {
                 script {
-                    withDockerRegistry(credentialsId: 'docker-hub-creds', toolName: 'docker') {
-                        sh "docker build -t ${env.JOB}:${BUILD_NUMBER} ."
-                        sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:v${BUILD_NUMBER}"
-                        sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:latest"
-                    }
+                    sh "docker build -t ${env.JOB}:${BUILD_NUMBER} ."
+                    sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:v${BUILD_NUMBER}"
+                    sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:latest"
                 }
             }
         }
