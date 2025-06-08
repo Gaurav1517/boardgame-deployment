@@ -135,7 +135,8 @@ pipeline {
                     restrictKubeConfigAccess: false,
                     serverUrl: 'https://192.168.70.130:6443'
                 ) {
-                    sh "kubectl get all -n webapps"
+                    sh "kubectl get pod -n webapps"
+                    sh "kubectl get svc -n webapps"
                 }
             }
         }
