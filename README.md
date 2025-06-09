@@ -13,16 +13,6 @@ This pipeline automates the complete lifecycle of the project, from code push to
 
 ### **Technologies & Tools Used**
 
-1. **Jenkins (CI/CD)** - Automates the build, test, and deployment process of the project.
-2. **SonarQube (Code Quality)** - Analyzes code quality, ensures clean, maintainable, and secure code.
-3. **Nexus (Artifact Repository)** - Manages the artifacts generated during the build process and stores them for future use.
-4. **Docker (Containerization)** - Encapsulates the BoardGame application in Docker containers, ensuring portability across environments.
-5. **Kubernetes (Orchestration)** - Manages and orchestrates the deployment of containers in a Kubernetes cluster.
-6. **Prometheus + Grafana (Monitoring)** - Collects metrics from the Kubernetes cluster and the application and visualizes them for observability.
-7. **Trivy (Security Scanning)** - Scans the Docker images and file system for vulnerabilities and provides security insights.
-8. **Blackbox & Node Exporter (System Metrics)** - Gathers system metrics and health status of nodes and containers in the Kubernetes cluster.
-
-
 <a href="https://docs.aws.amazon.com/ec2/">
   <img src="https://icon.icepanel.io/AWS/svg/Compute/EC2.svg" alt="EC2" width="80">
 </a>
