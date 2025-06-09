@@ -22,8 +22,9 @@ This pipeline automates the complete lifecycle of the project, from code push to
 7. **Trivy (Security Scanning)** - Scans the Docker images and file system for vulnerabilities and provides security insights.
 8. **Blackbox & Node Exporter (System Metrics)** - Gathers system metrics and health status of nodes and containers in the Kubernetes cluster.
 
-<a href="https://aws.amazon.com">
-  <img src="https://www.svgrepo.com/show/376356/aws.svg" alt="AWS" width="80">
+
+<a href="https://docs.aws.amazon.com/ec2/">
+  <img src="https://icon.icepanel.io/AWS/svg/Compute/EC2.svg" alt="EC2" width="80">
 </a>
 <a href="https://www.kernel.org">
   <img src="https://www.svgrepo.com/show/354004/linux-tux.svg" alt="Linux" width="80">
@@ -46,6 +47,12 @@ This pipeline automates the complete lifecycle of the project, from code push to
 <a href="https://www.docker.com">
   <img src="https://www.svgrepo.com/show/303231/docker-logo.svg" alt="Docker" width="80">
 </a>
+<a href="https://help.sonatype.com/en/sonatype-nexus-repository.html">
+  <img src="https://www.itential.com/wp-content/uploads/marketplace-logos/Nexus.png" alt="Nexus" width="80">
+</a>
+<a href="https://docs.sonarsource.com/sonarqube-server/8.9/">
+  <img src="https://www.svgrepo.com/show/354365/sonarqube.svg" alt="SonarQube" width="80">
+</a>
 <a href="https://kubernetes.io">
   <img src="https://www.svgrepo.com/show/376331/kubernetes.svg" alt="Kubernetes" width="80">
 </a>
@@ -54,12 +61,6 @@ This pipeline automates the complete lifecycle of the project, from code push to
 </a>
 <a href="https://grafana.com/">
   <img src="https://icon.icepanel.io/Technology/svg/Grafana.svg" alt="Grafana" width="80">
-</a>
-<a href="https://help.sonatype.com/en/sonatype-nexus-repository.html">
-  <img src="https://www.itential.com/wp-content/uploads/marketplace-logos/Nexus.png" alt="Nexus" width="80">
-</a>
-<a href="https://docs.sonarsource.com/sonarqube-server/8.9/">
-  <img src="https://www.svgrepo.com/show/354365/sonarqube.svg" alt="SonarQube" width="80">
 </a>
 <a href="https://gmail.com">
   <img src="https://www.svgrepo.com/show/349378/gmail.svg" alt="Gmail" width="80">
