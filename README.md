@@ -1,4 +1,4 @@
-## CI/CD Pipeline & Infrastructure Setup for Java-based BoardGame Project
+## BoardGame K8s Deployment Pipeline
 
 ### **Overview**
 
@@ -22,6 +22,48 @@ This pipeline automates the complete lifecycle of the project, from code push to
 7. **Trivy (Security Scanning)** - Scans the Docker images and file system for vulnerabilities and provides security insights.
 8. **Blackbox & Node Exporter (System Metrics)** - Gathers system metrics and health status of nodes and containers in the Kubernetes cluster.
 
+<a href="https://aws.amazon.com">
+  <img src="https://www.svgrepo.com/show/376356/aws.svg" alt="AWS" width="80">
+</a>
+<a href="https://www.kernel.org">
+  <img src="https://www.svgrepo.com/show/354004/linux-tux.svg" alt="Linux" width="80">
+</a>
+<a href="https://git-scm.com">
+  <img src="https://www.svgrepo.com/show/452210/git.svg" alt="Git" width="80">
+</a>
+<a href="https://github.com">
+  <img src="https://www.svgrepo.com/show/475654/github-color.svg" alt="GitHub" width="80">
+</a>
+<a href="https://www.jenkins.io">
+  <img src="https://get.jenkins.io/art/jenkins-logo/logo.svg" alt="Jenkins" width="80">
+</a>
+<a href="https://maven.apache.org">
+  <img src="https://www.svgrepo.com/show/354051/maven.svg" alt="Maven" width="80">
+</a>
+<a href="https://github.com/tonistiigi/trivy">
+  <img src="https://trivy.dev/v0.46/imgs/logo.png" alt="Trivy" width="80">
+</a>
+<a href="https://www.docker.com">
+  <img src="https://www.svgrepo.com/show/303231/docker-logo.svg" alt="Docker" width="80">
+</a>
+<a href="https://kubernetes.io">
+  <img src="https://www.svgrepo.com/show/376331/kubernetes.svg" alt="Kubernetes" width="80">
+</a>
+<a href="https://prometheus.io/">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Prometheus_software_logo.svg" alt="Prometheus" width="80">
+</a>
+<a href="https://grafana.com/">
+  <img src="https://icon.icepanel.io/Technology/svg/Grafana.svg" alt="Grafana" width="80">
+</a>
+<a href="https://help.sonatype.com/en/sonatype-nexus-repository.html">
+  <img src="https://www.itential.com/wp-content/uploads/marketplace-logos/Nexus.png" alt="Nexus" width="80">
+</a>
+<a href="https://docs.sonarsource.com/sonarqube-server/8.9/">
+  <img src="https://www.svgrepo.com/show/354365/sonarqube.svg" alt="SonarQube" width="80">
+</a>
+<a href="https://gmail.com">
+  <img src="https://www.svgrepo.com/show/349378/gmail.svg" alt="Gmail" width="80">
+</a>
 
 ---
 
@@ -47,7 +89,7 @@ To create an EC2 instance on AWS with RHEL:
 3. **Launch EC2 Instance**:
 
    * Choose **Red Hat Enterprise Linux 9 (HVM), SSD Volume Type** AMI.
-   * Select the instance type (e.g., `t2.micro` for testing).
+   * Select the instance type (e.g., `t2.meduim` for testing).
 4. **Configure Instance Details**: Leave the defaults for network settings.
 5. **Add Storage and Tags**: Set default storage or adjust as needed.
 6. **Security Group**: Open the required ports (detailed in the next section).
@@ -818,8 +860,6 @@ pipeline {
 
 
 # Prometheus v3.4.1 Installation and Setup on Linux
-REF: https://prometheus.io/download/
----
 
 ## 1. Download and Extract Prometheus
 
@@ -848,9 +888,6 @@ sudo chown -R prometheus:prometheus /opt/prometheus /etc/prometheus /var/lib/pro
 sudo cp /opt/prometheus/prometheus.yml /etc/prometheus/
 sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
 ```
-
-> **Note:** Prometheus v3.x **does not include** `consoles` and `console_libraries` folders anymore, so **skip copying those**.
-
 ---
 
 ## 4. Create systemd Service File
@@ -907,16 +944,8 @@ http://<your-server-ip>:9090
 
 ---
 
-# Add port in Firewall Adjustment 
-
-```bash
-sudo firewall-cmd --add-port=9090/tcp --permanent
-sudo firewall-cmd --reload
-```
-
 
 ## ✅ Step-by-Step: Install & Start Grafana on RHEL/CentOS
-REF: https://grafana.com/grafana/download
 
 ### 🔹 1. Download and Install Grafana Enterprise
 
@@ -999,8 +1028,10 @@ Once logged into Grafana:
 
 # Download blackbox exporter 
 NOTE": Before insalling blackbox exporter change is prometheus configureation file 
-REF: https://github.com/prometheus/blackbox_exporter
+
 vim /etc/prometheus/prometheus.yml
+
+```yaml
 # my global config
 global:
   scrape_interval: 15s
@@ -1016,7 +1047,8 @@ rule_files: []
 scrape_configs:
   - job_name: "prometheus"
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: 
+          - "<prometheus-IP>:9090"
 
   - job_name: 'blackbox'
     metrics_path: /probe
@@ -1033,6 +1065,7 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: <192.168.70.135:9115>  # The blackbox exporter's real hostname:port.
+```
 
 ###  Restart Prometheus to Apply Config
 sudo systemctl restart prometheus
@@ -1103,18 +1136,7 @@ curl "http://localhost:9115/probe?target=https://www.google.com&module=http_2xx"
 
 ---
 
-### 🔹 7. (Optional) Open Firewall Port
-
-If you want to access Blackbox Exporter remotely:
-
-```bash
-sudo firewall-cmd --add-port=9115/tcp --permanent
-sudo firewall-cmd --reload
-```
-
----
-
-Install plugins 
+## Install plugins 
 Prometheus metricsVersion
 
 ## ✅ Step-by-Step: Install Node Exporter (v1.9.1)
@@ -1178,17 +1200,6 @@ sudo systemctl status node_exporter
 ```
 
 You should see `Active: active (running)` ✅
-
----
-
-### 🔹 5. (Optional) Open Firewall Port
-
-Node Exporter listens on port **9100**:
-
-```bash
-sudo firewall-cmd --add-port=9100/tcp --permanent
-sudo firewall-cmd --reload
-```
 
 ---
 
