@@ -161,7 +161,7 @@ Follow the steps below to install Jenkins on the server:
 
 ---
 
-## 🔍 Trivy Installation (Security Scanner)
+## 🔍 Trivy Installation (Security Scanner) 
 
 To install Trivy on Jenkins:
 
@@ -189,7 +189,7 @@ To install Trivy on Jenkins:
 
 ## 🐳 Docker Installation
 
-To install Docker on each of your servers:
+To install Docker on jenkins, sonarqube & nexus servers:
 
 ```bash
 sudo dnf -y install dnf-plugins-core
@@ -202,7 +202,7 @@ docker run hello-world
 
 ---
 
-## 📦 Nexus (Artifact Repository)
+## 📦 Nexus (Artifact Repository) server configuration
 
 To set up Nexus on Docker:
 
@@ -228,7 +228,7 @@ To set up Nexus on Docker:
 
 ---
 
-## 📊 SonarQube (Code Quality)
+## 📊 SonarQube (Code Quality) server configuration 
 
 To run SonarQube on Docker:
 
