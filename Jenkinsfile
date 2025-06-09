@@ -148,13 +148,13 @@ pipeline {
                                 </body>
                               </html>"""
 
-                echo "Sending email to: gaurav.mau854@gmail.com"
+                echo "Sending email to: <email-ID>"
                 emailext(
                     subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus}",
                     body: body,
-                    to: 'gaurav.mau854@gmail.com',
-                    from: 'gaurav.mau854@gmail.com',
-                    replyTo: 'gaurav.mau854@gmail.com',
+                    to: '<email-ID>',
+                    from: '<email-ID>',
+                    replyTo: '<email-ID>',
                     mimeType: 'text/html',
                     attachmentsPattern: "trivy-${env.JOB}-*.html"
                 )

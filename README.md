@@ -1,73 +1,162 @@
-# 🎲 Boardgame App Infrastructure Setup
+## CI/CD Pipeline & Infrastructure Setup for Java-based BoardGame Project
 
-This document outlines the complete infrastructure setup for the **Boardgame App**, including CI/CD pipelines, security scanning, artifact management, monitoring, and Kubernetes deployment.
+### **Overview**
+
+The goal of this project is to build a fully automated CI/CD pipeline and infrastructure setup for a **Java-based BoardGame** application. This setup ensures smooth code integration, testing, security scanning, artifact management, containerization, orchestration, and monitoring. The project leverages a suite of popular DevOps tools to ensure code quality, application security, scalability, and continuous delivery.
+
+This pipeline automates the complete lifecycle of the project, from code push to deployment in a Kubernetes cluster.
+
+
+### **CI/CD Workflow**
+![workflow-arhite](snap/architecture.png)
+
+
+### **Technologies & Tools Used**
+
+1. **Jenkins (CI/CD)** - Automates the build, test, and deployment process of the project.
+2. **SonarQube (Code Quality)** - Analyzes code quality, ensures clean, maintainable, and secure code.
+3. **Nexus (Artifact Repository)** - Manages the artifacts generated during the build process and stores them for future use.
+4. **Docker (Containerization)** - Encapsulates the BoardGame application in Docker containers, ensuring portability across environments.
+5. **Kubernetes (Orchestration)** - Manages and orchestrates the deployment of containers in a Kubernetes cluster.
+6. **Prometheus + Grafana (Monitoring)** - Collects metrics from the Kubernetes cluster and the application and visualizes them for observability.
+7. **Trivy (Security Scanning)** - Scans the Docker images and file system for vulnerabilities and provides security insights.
+8. **Blackbox & Node Exporter (System Metrics)** - Gathers system metrics and health status of nodes and containers in the Kubernetes cluster.
+
 
 ---
 
-## 📦 Components Used
 
-- Jenkins (CI/CD)
-- SonarQube (Code Quality)
-- Nexus (Artifact Repository)
-- Docker (Containerization)
-- Kubernetes (Orchestration)
-- Prometheus + Grafana (Monitoring)
-- Trivy (Security Scanning)
-- Blackbox & Node Exporter (System Metrics)
+## 🚀 Infrastructure Setup
+
+To deploy the infrastructure on AWS, the following components need to be provisioned:
+
+1. **Jenkins Server**
+2. **Kubernetes Cluster** (with 1 Master and 2 Slave nodes)
+3. **Nexus Server** (Artifact Repository)
+4. **SonarQube Server** (Code Quality)
+5. **Monitoring Server** (Prometheus + Grafana + Node Exporter + Blackbox)
+6. **Security Scanning Server** (on Jenkins-Server- Trivy)
+
+
+### AWS EC2 Instance Setup for Ubuntu
+
+To create an EC2 instance on AWS with RHEL:
+
+1. **Sign in to AWS Management Console**: Go to the [AWS Console](https://aws.amazon.com/console/) and log in with your AWS account.
+2. **Navigate to EC2**: Search for EC2 and open the dashboard.
+3. **Launch EC2 Instance**:
+
+   * Choose **Red Hat Enterprise Linux 9 (HVM), SSD Volume Type** AMI.
+   * Select the instance type (e.g., `t2.micro` for testing).
+4. **Configure Instance Details**: Leave the defaults for network settings.
+5. **Add Storage and Tags**: Set default storage or adjust as needed.
+6. **Security Group**: Open the required ports (detailed in the next section).
+7. **Launch Instance**: Review and launch the instance.
+
+Once the instance is running, use SSH to access it.
 
 ---
-
 
 ## 🔥 Firewall Configuration
 
-Ensure these ports are open on respective servers:
+Ensure the following ports are open on respective servers:
 
-| Service       | Port   |
-|---------------|--------|
-| Jenkins       | 8080   |
-| Nexus         | 8081   |
-| SonarQube     | 9000   |
-| Prometheus    | 9090   |
-| Grafana       | 3000   |
-| Node Exporter | 9100   |
-| Blackbox      | 9115   |
-| K8s API       | 6443   |
+| Service       | Port        |
+| ------------- | ----------- |
+| Jenkins       | 8080        |
+| Nexus         | 8081        |
+| SonarQube     | 9000        |
+| Prometheus    | 9090        |
+| Grafana       | 3000        |
+| Node Exporter | 9100        |
+| Blackbox      | 9115        |
+| K8s API       | 6443        |
 | NodePort      | 30000-32767 |
 
+![infra-machine](snap/Infra-machine.png)
 
-## 🔥 Firewall Configuration
+---
 
-Allow required ports on all necessary machines:
+## ⚙️ Jenkins Installation
 
-```bash
-# Jenkins
-sudo firewall-cmd --permanent --add-port=8080/tcp
+Follow the steps below to install Jenkins on the server:
 
-# Nexus
-sudo firewall-cmd --permanent --add-port=8081/tcp
+1. **Install Dependencies**:
 
-# SonarQube
-sudo firewall-cmd --permanent --add-port=9000/tcp
+   ```bash
+   sudo yum install -y fontconfig java-21-openjdk wget tree curl vim net-tools
+   java --version
+   ```
 
-# Application (Kubernetes NodePort)
-sudo firewall-cmd --permanent --add-port=8080/tcp
+2. **Add Jenkins Repository**:
 
-# Kubernetes Core Components
-sudo firewall-cmd --permanent --add-port=6443/tcp      # API Server
-sudo firewall-cmd --permanent --add-port=2379-2380/tcp  # etcd
-sudo firewall-cmd --permanent --add-port=10250-10255/tcp  # Kubelet and controllers
-sudo firewall-cmd --permanent --add-port=30000-32767/tcp  # NodePorts
+   ```bash
+   sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+   sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+   ```
 
-# Apply and verify
-sudo firewall-cmd --reload
-sudo firewall-cmd --list-ports
-````
+3. **Install Jenkins**:
+
+   ```bash
+   sudo yum upgrade
+   sudo yum install -y jenkins
+   sudo systemctl enable --now jenkins
+   sudo systemctl status jenkins
+   ```
+
+4. **Access Jenkins**:
+
+   Get the Jenkins initial admin password:
+
+   ```bash
+   sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
+
+   Visit: `http://<your-server-ip>:8080`
+
+![jenkins-server](snap/jenkins.png)
+---
+
+## 🧩 Jenkins Plugins to Install
+
+1. **JDK**: Eclipse Temurin installer
+2. **Maven**: Config File Provider, Pipeline Maven Integration
+3. **SonarQube**: SonarQube Scanner
+4. **Docker**: Docker, Docker Pipeline
+5. **Kubernetes**: Kubernetes CLI, Client API, Credentials
+
+
+---
+
+## 🔍 Trivy Installation (Security Scanner)
+
+To install Trivy on Jenkins:
+
+1. **Add Trivy Repository**:
+
+   ```bash
+   cat <<EOF | sudo tee /etc/yum.repos.d/trivy.repo
+   [trivy]
+   name=Trivy repository
+   baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/\$releasever/\$basearch/
+   gpgcheck=0
+   enabled=1
+   EOF
+   ```
+
+2. **Install Trivy**:
+
+   ```bash
+   sudo yum -y update
+   sudo yum -y install trivy
+   trivy --version
+   ```
 
 ---
 
 ## 🐳 Docker Installation
 
-[Docker Install Guide for RHEL](https://docs.docker.com/engine/install/rhel/)
+To install Docker on each of your servers:
 
 ```bash
 sudo dnf -y install dnf-plugins-core
@@ -80,93 +169,51 @@ docker run hello-world
 
 ---
 
-## ⚙️ Jenkins Installation
-
-[Jenkins RHEL Install Guide](https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos)
-
-```bash
-sudo yum install -y fontconfig java-21-openjdk wget
-java --version
-
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
-
-sudo yum upgrade
-sudo yum install -y jenkins
-
-sudo systemctl enable --now jenkins
-sudo systemctl status jenkins
-```
-
-### Jenkins Access
-
-```bash
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-```
-
-Visit: `http://<your-server-ip>:8080`
-
----
-
-## 🧩 Jenkins Plugins to Install
-
-* **JDK**: Eclipse Temurin installer
-* **Maven**: Config File Provider, Pipeline Maven Integration
-* **Sonar**: SonarQube Scanner
-* **Docker**: Docker, Docker Pipeline
-* **Kubernetes**: Kubernetes CLI, Client API, Credentials
-
----
-
-## 🔍 Trivy Installation (Security Scanner)
-
-[Trivy Install Guide](https://trivy.dev/v0.18.3/installation/)
-
-```bash
-cat <<EOF | sudo tee /etc/yum.repos.d/trivy.repo
-[trivy]
-name=Trivy repository
-baseurl=https://aquasecurity.github.io/trivy-repo/rpm/releases/\$releasever/\$basearch/
-gpgcheck=0
-enabled=1
-EOF
-
-sudo yum -y update
-sudo yum -y install trivy
-trivy --version
-```
-
----
-
 ## 📦 Nexus (Artifact Repository)
 
-```bash
-docker pull sonatype/nexus3
-docker run -d --name nexus -p 8081:8081 sonatype/nexus3
-```
+To set up Nexus on Docker:
 
-Access: `http://<your-server-ip>:8081`
+1. **Pull Nexus Image**:
 
-Get admin password:
+   ```bash
+   docker pull sonatype/nexus3
+   ```
 
-```bash
-docker exec -it nexus cat /opt/sonatype/sonatype-work/nexus3/admin.password
-```
+2. **Run Nexus**:
+
+   ```bash
+   docker run -d --name nexus -p 8081:8081 sonatype/nexus3
+   ```
+
+   Access Nexus: `http://<your-server-ip>:8081`
+
+3. **Get Admin Password**:
+
+   ```bash
+   docker exec -it nexus cat /opt/sonatype/sonatype-work/nexus3/admin.password
+   ```
 
 ---
 
 ## 📊 SonarQube (Code Quality)
 
-```bash
-docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
-```
+To run SonarQube on Docker:
 
-Access: `http://<your-server-ip>:9000`
-Default credentials: `admin / admin`
+1. **Run SonarQube**:
+
+   ```bash
+   docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+   ```
+
+   Access SonarQube: `http://<your-server-ip>:9000`
+
+   Default credentials: `admin / admin`
 
 ---
 
 ## 🧑‍🔧 Docker Group Permissions
+
+Ensure Jenkins, SonarQube, and Nexus can use Docker by adding them to the Docker group:
 
 ```bash
 sudo usermod -aG docker jenkins
@@ -175,101 +222,49 @@ sudo usermod -aG docker nexus
 sudo usermod -aG docker $USER
 newgrp docker  # or re-login
 ```
-
-> ⚠️ In production, avoid using `chmod 666 /var/run/docker.sock`
-
----
-
-## 🔁 Systemd Services for Dockerized Nexus & Sonar
-
-### Nexus
-
-```bash
-cat <<EOF | sudo tee /etc/systemd/system/docker.nexus.service
-[Unit]
-Description=My container Nexus server
-After=docker.service
-Requires=docker.service
-
-[Service]
-Restart=always
-ExecStart=/usr/bin/docker start -a nexus
-ExecStop=/usr/bin/docker stop nexus
-TimeoutStartSec=0
-
-[Install]
-WantedBy=multi-user.target
-EOF
-```
-
-### Sonar
-
-```bash
-cat <<EOF | sudo tee /etc/systemd/system/docker.sonar.service
-[Unit]
-Description=My container SonarQube server
-After=docker.service
-Requires=docker.service
-
-[Service]
-Restart=always
-ExecStart=/usr/bin/docker start -a sonar
-ExecStop=/usr/bin/docker stop sonar
-TimeoutStartSec=0
-
-[Install]
-WantedBy=multi-user.target
-EOF
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now docker.nexus.service
-sudo systemctl enable --now docker.sonar.service
-```
-
-## Add maven-release & maven-snapshot in pom.xml file 
-distributionManagement>
-        <repository>
-            <id>maven-releases</id>
-            <url>http://192.168.70.135:8081/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>maven-snapshots</id>
-            <url>http://192.168.70.135:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
+![sonar-nexus-container](snap/sonar-nexus-container.png)
 ---
 
 ## ☸️ Kubernetes Cluster Setup
 
-### Pre-requisites
+### Pre-requisites:
 
-```bash
-sudo setenforce 0
-sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-sudo swapoff -a
-sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+1. **Disable SELinux and Swap**:
 
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-EOF
+   ```bash
+   sudo setenforce 0
+   sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+   sudo swapoff -a
+   sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+   ```
 
-sudo modprobe overlay
-sudo modprobe br_netfilter
+2. **Enable Necessary Modules**:
 
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
-EOF
+   ```bash
+   cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+   overlay
+   br_netfilter
+   EOF
 
-sudo sysctl --system
-```
+   sudo modprobe overlay
+   sudo modprobe br_netfilter
+   ```
 
-### Container Runtime: containerd
+3. **Configure sysctl settings**:
+
+   ```bash
+   cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+   net.bridge.bridge-nf-call-iptables  = 1
+   net.bridge.bridge-nf-call-ip6tables = 1
+   net.ipv4.ip_forward                 = 1
+   EOF
+
+   sudo sysctl --system
+   ```
+
+---
+
+### Install Container Runtime (containerd):
 
 ```bash
 sudo dnf install -y containerd.io
@@ -281,25 +276,33 @@ sudo systemctl restart containerd
 
 ---
 
-## 🔧 Kubernetes Installation
+### Install Kubernetes:
 
-```bash
-cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
-exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
-EOF
+1. **Add Kubernetes Repo**:
 
-sudo yum update -y
-sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
-sudo systemctl enable --now kubelet
-```
+   ```bash
+   cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+   [kubernetes]
+   name=Kubernetes
+   baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+   exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+   EOF
+   ```
 
-### Initialize Control Plane
+2. **Install Kubernetes Packages**:
+
+   ```bash
+   sudo yum update -y
+   sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+   sudo systemctl enable --now kubelet
+   ```
+
+---
+
+### Initialize Kubernetes Control Plane:
 
 ```bash
 sudo kubeadm init --ignore-preflight-errors=all
@@ -308,17 +311,20 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-### Install Calico CNI
+---
+
+### Install Calico CNI (Networking):
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml
 ```
+`
 
 
 ## 📁 GitHub Repository Setup
 
 ### Create GitHub Repository
-- Repository: `gaurav1517/BoardGame`
+- Repository: `https://github.com/Gaurav1517/boardgame-deployment.git`
 
 ### Create GitHub Access Token
 - Go to: **Settings > Developer Settings > Personal Access Tokens > Tokens (classic)**
@@ -336,34 +342,15 @@ git commit -m "source code"
 git config --global user.name "Gaurav Chauhan"
 git config --global user.email "gaurav.cloud000@gmail.com"
 git branch -M main
-git remote add origin https://github.com/gaurav1517/BoardGame.git
+git remote add origin https://github.com/Gaurav1517/boardgame-deployment.git
 git push origin -u main
 ````
-
----
-
-## 📄 Jenkinsfile Tools Configuration
-
-```groovy
-tools {
-  jdk 'jdk-17'
-  dockerTool 'docker'
-  maven 'maven'
-}
-```
-
 ---
 
 ## 🔑 Jenkins Credentials Setup
 
 > Dashboard > Manage Jenkins > Credentials > System > Global credentials (unrestricted)
-
-* **Kind:** Username with password
-* **Scope:** Global
-* **Username:** Gaurav1517
-* **Password:** (your GitHub PAT)
-* **ID:** `git-cred`
-* **Description:** `git-cred`
+![](snap/jenkins-cred.png)
 
 ---
 
@@ -374,7 +361,72 @@ tools {
 
   * **Name:** jenkins
   * **URL:** `http://192.168.70.135:8080/sonar-webhook/`
+  ![](snap/sonar-tool.png)
 
+## Maven config
+![](snap/maven-tool.png)
+
+## Docker config
+![](snap/docker-tool.png)
+
+## jdk-17 config for application
+![](snap/jdk-tool.png)
+
+# 📧 Jenkins Email Notification Setup
+
+### Create App Password on Gmail
+
+Use App Password (not actual Gmail password) for authentication.
+
+### Configure in Jenkins:
+
+> Manage Jenkins > System
+
+#### Extended E-mail Notification
+
+* **SMTP Server:** `smtp.gmail.com`
+* **SMTP Port:** `465`
+* **Use SSL:** ✅
+* **Credentials:** `<email-ID>` / `app-password` (ID: `mail-cred`)
+
+#### E-mail Notification
+
+* **SMTP Server:** `smtp.gmail.com`
+* **SMTP Port:** `465`
+* **Use SMTP Authentication:** ✅
+* **User Name:** `<email-ID>`
+* **Password:** `app-password`
+* **Use SSL:** ✅
+
+#### Test Email
+
+* Recipient: `<email-ID>`
+* Status: ✅ Successfully sent
+
+![](snap/system-email-1.png)
+![](snap/system-email-2.png)
+---
+
+# Install kubectl on jenkins server
+```bash
+#!/bin/bash
+
+set -e  # Exit immediately if a command exits with a non-zero status
+
+echo "📥 Downloading the latest kubectl binary..."
+curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+echo "🔐 Making kubectl executable..."
+chmod +x kubectl
+
+echo "🚚 Moving kubectl to /usr/local/bin (requires sudo)..."
+sudo mv kubectl /usr/local/bin/
+
+echo "✅ Verifying kubectl installation..."
+kubectl version --client
+
+echo "🎉 kubectl installation completed successfully!"
+```
 ---
 
 ## 🔐 Kubernetes RBAC Configuration for Jenkins
@@ -503,6 +555,42 @@ kubectl describe secret mysecretname -n webapps
 
 > 🔗 [Service Account Token Reference](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin)
 
+![rbac](snap/rbac-1.png)
+![rbac](snap/rbac-2.png)
+
+---
+
+### Configure Manage files, Add this server cred in Manged files.
+Dashboard > Manage Jenkins > Managed files
+```bash
+<server>
+      <id>maven-release</id>
+      <username>admin</username>
+      <password>password</password>
+    </server>
+     <server>
+      <id>maven-snapshots</id>
+      <username>admin</username>
+      <password>password</password>
+    </server>
+```
+![](snap/managed-files.png)
+
+## Nexus repo  config repository & shapshot url in pom.xml file. 
+
+```bash
+ <distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <url>http://<Nexus-server-IP>:8081/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <url>http://<Nexus-Server-IP>:8081/repository/maven-snapshots/</url>
+        <snapshotRepository>
+    </distributionManagement>
+```
+
 ---
 
 ## 📦 Kubernetes Deployment and Service
@@ -547,68 +635,186 @@ spec:
 
 ---
 
-## 📧 Jenkins Email Notification Setup
-
-### Create App Password on Gmail
-
-Use App Password (not actual Gmail password) for authentication.
-
-### Configure in Jenkins:
-
-> Manage Jenkins > System
-
-#### Extended E-mail Notification
-
-* **SMTP Server:** `smtp.gmail.com`
-* **SMTP Port:** `465`
-* **Use SSL:** ✅
-* **Credentials:** `gaurav.mau854@gmail.com` / `app-password` (ID: `mail-cred`)
-
-#### E-mail Notification
-
-* **SMTP Server:** `smtp.gmail.com`
-* **SMTP Port:** `465`
-* **Use SMTP Authentication:** ✅
-* **User Name:** `gaurav.mau854@gmail.com`
-* **Password:** `app-password`
-* **Use SSL:** ✅
-
-#### Test Email
-
-* Recipient: `gaurav.mau854@gmail.com`
-* Status: ✅ Successfully sent
-
-### Allow Port 465 on Jenkins Server
+# RUn jenkins pipeline 
 
 ```bash
-sudo firewall-cmd --add-port=465/tcp --permanent
-sudo firewall-cmd --reload
-sudo firewall-cmd --list-ports
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk-17'
+        dockerTool 'docker'
+        maven 'maven'
+    }
+
+    environment {
+        SCANNER_HOME = tool "sonar-scanner"
+        DOCKER_USERNAME = "gchauhan1517"
+    }
+
+    stages {
+        stage('Set Job Name Lower') {
+            steps {
+                script {
+                    env.JOB = env.JOB_NAME.toLowerCase()
+                }
+            }
+        }
+
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/Gaurav1517/boardgame-deployment.git'
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+
+        stage('Maven Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('File System Scan') {
+            steps {
+                sh "trivy fs --format table -o trivy-${env.JOB}-fs-report.html ."
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh """
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectName=${env.JOB} \
+                        -Dsonar.projectKey=${env.JOB} \
+                        -Dsonar.java.binaries=.
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'    
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+
+        stage('Publish to Nexus') {
+            steps {
+                withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'jdk-17', maven: 'maven', traceability: true) {
+                    sh 'mvn deploy'
+                }
+            }
+        }
+
+        stage('Docker Build & Tag') {
+            steps {
+                script {
+                    sh "docker build -t ${env.JOB}:${BUILD_NUMBER} ."
+                    sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:v${BUILD_NUMBER}"
+                    sh "docker tag ${env.JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${env.JOB}:latest"
+                }
+            }
+        }
+
+        stage('Docker Image Scan') {
+            steps {
+                sh "trivy image --format table -o trivy-${env.JOB}-image-report.html ${DOCKER_USERNAME}/${env.JOB}:v${BUILD_NUMBER}"
+            }
+        }
+
+        stage('Docker Image Push') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'docker_pass', usernameVariable: 'docker_user')]) {
+                        sh "docker login -u '${docker_user}' -p '${docker_pass}'"
+                        sh "docker push ${docker_user}/${env.JOB}:v${BUILD_NUMBER}"
+                        sh "docker push ${docker_user}/${env.JOB}:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy on Kubernetes') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://192.168.70.130:6443') {
+                    sh "kubectl apply -f deployment-service.yaml"
+                }
+            }
+        }
+
+        stage('Verify the Deployment') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8s-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://192.168.70.130:6443') {
+                    sh "kubectl get pod -n webapps"
+                    sh "kubectl get svc -n webapps"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+                def bannerColor = pipelineStatus == 'SUCCESS' ? 'green' : 'red'
+
+                def body = """<html>
+                                <body>
+                                    <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                                        <h2>${jobName} - Build ${buildNumber}</h2>
+                                        <div style="background-color: ${bannerColor}; padding: 10px;">
+                                            <h3 style="color: white;">Pipeline Status: ${pipelineStatus}</h3>
+                                        </div>
+                                        <p>Check the <a href="${env.BUILD_URL}">console output</a> for more details.</p>
+                                        <p><strong>Build Summary:</strong></p>
+                                        <p>${pipelineStatus == 'SUCCESS' ? 'The build completed successfully!' : 'The build failed. Please check the logs for errors.'}</p>
+                                    </div>
+                                </body>
+                              </html>"""
+
+                echo "Sending email to: <email-ID>"
+                emailext(
+                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus}",
+                    body: body,
+                    to: '<email-ID>',
+                    from: '<email-ID>',
+                    replyTo: '<email-ID',
+                    mimeType: 'text/html',
+                    attachmentsPattern: "trivy-${env.JOB}-*.html"
+                )
+            }
+        }
+    }
+}
+
 ```
+## Pipeline snap
+![](snap/pipeline.png)
+![](snap/app-snap.png)
+![](snap/k8s-deployment.png)
+![](snap/nexus-repository.png)
+![](snap/sonarqube-reoprt.png)
+![](snap/docker-images.png)
+![](snap/docker-hub-image.png)
+![](snap/email-notification.png)
 
-# Install kubectl on jenkins server
-#!/bin/bash
-
-set -e  # Exit immediately if a command exits with a non-zero status
-
-echo "📥 Downloading the latest kubectl binary..."
-curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-
-echo "🔐 Making kubectl executable..."
-chmod +x kubectl
-
-echo "🚚 Moving kubectl to /usr/local/bin (requires sudo)..."
-sudo mv kubectl /usr/local/bin/
-
-echo "✅ Verifying kubectl installation..."
-kubectl version --client
-
-echo "🎉 kubectl installation completed successfully!"
-
-
-# RUn jenkins pipeline 
-http://<worker-node-IP:service-port>
-
+---
 
 
 # Prometheus v3.4.1 Installation and Setup on Linux
@@ -1018,25 +1224,37 @@ sudo systemctl restart prometheus
 * **Prometheus UI**: Check target status under **Status > Targets**
 * **Metrics**: Search for `node_cpu_seconds_total`, `node_memory_MemAvailable_bytes`, etc.
 
+
+
+## Monitoring Outputs
+![](snap/prometheus.png)
+![](snap/Blackbox-exporter.png)
+![](snap/Node-exporter.png)
+![](snap/Grafana-blackbox.png)
+![](snap/Grafana-NodeExporter.png)
 ---
 
-REF: 
-Docker Installation: https://docs.docker.com/engine/install/rhel/
-Docker Hub: https://hub.docker.com/
-Git Installation: https://git-scm.com/downloads/linux
-Nexus docker hub image: https://hub.docker.com/r/sonatype/nexus3
-SonarQube docker hub image: https://hub.docker.com/layers/library/sonarqube/lts-community/images/sha256-d3d04c0fec696dcf92657ae25ee5662aba32b1a44f61571ea7b1adca001a647a
-Jenkins Installation: https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos
-Trivy installation: https://trivy.dev/v0.18.3/installation/
-Kubernetes cluster setup: https://v1-32.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
-K8s RBAC: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-K8s SeviceAccount: https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/
-Kubectl download: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-Prometheous download: https://prometheus.io/download/
-Grafana download: https://grafana.com/grafana/download
-Node exporter dashboard : https://grafana.com/grafana/dashboards/1860-node-exporter-full/
-Prometheus Blackbox exporter: https://grafana.com/grafana/dashboards/7587-prometheus-blackbox-exporter/
-Prometheus configuration: https://github.com/prometheus/blackbox_exporter
 
+# Reference Links
 
+Here are some useful reference links for various tools and installation guides:
 
+- **Docker Installation**: [https://docs.docker.com/engine/install/rhel/](https://docs.docker.com/engine/install/rhel/)
+- **Docker Hub**: [https://hub.docker.com/](https://hub.docker.com/)
+- **Git Installation**: [https://git-scm.com/downloads/linux](https://git-scm.com/downloads/linux)
+- **Nexus Docker Hub Image**: [https://hub.docker.com/r/sonatype/nexus3](https://hub.docker.com/r/sonatype/nexus3)
+- **SonarQube Docker Hub Image**: [https://hub.docker.com/layers/library/sonarqube/lts-community/images/sha256-d3d04c0fec696dcf92657ae25ee5662aba32b1a44f61571ea7b1adca001a647a](https://hub.docker.com/layers/library/sonarqube/lts-community/images/sha256-d3d04c0fec696dcf92657ae25ee5662aba32b1a44f61571ea7b1adca001a647a)
+- **Jenkins Installation**: [https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos](https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos)
+- **Trivy Installation**: [https://trivy.dev/v0.18.3/installation/](https://trivy.dev/v0.18.3/installation/)
+- **Kubernetes Cluster Setup**: [https://v1-32.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/](https://v1-32.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+- **Calico Network**: [https://archive-os-3-26.netlify.app/calico/3.26/getting-started/kubernetes/self-managed-onprem/onpremises](https://archive-os-3-26.netlify.app/calico/3.26/getting-started/kubernetes/self-managed-onprem/onpremises)
+- **K8s RBAC**: [https://kubernetes.io/docs/reference/access-authn-authz/rbac/](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- **K8s ServiceAccount**: [https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)
+- **Kubectl Download**: [https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+- **Prometheus Download**: [https://prometheus.io/download/](https://prometheus.io/download/)
+- **Grafana Download**: [https://grafana.com/grafana/download](https://grafana.com/grafana/download)
+- **Node Exporter Dashboard**: [https://grafana.com/grafana/dashboards/1860-node-exporter-full/](https://grafana.com/grafana/dashboards/1860-node-exporter-full/)
+- **Prometheus Blackbox Exporter**: [https://grafana.com/grafana/dashboards/7587-prometheus-blackbox-exporter/](https://grafana.com/grafana/dashboards/7587-prometheus-blackbox-exporter/)
+- **Prometheus Configuration**: [https://github.com/prometheus/blackbox_exporter](https://github.com/prometheus/blackbox_exporter)
+
+---
